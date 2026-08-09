@@ -1,0 +1,45 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.api
+    environment:
+      ASTERION_PORT: "4020"
+      ASTERION_DATABASE_PATH: /var/lib/asterion/asterion.db
+      ASTERION_WEB_ORIGIN: http://localhost:5174
+      ASTERION_WORKER_TOKEN: ${ASTERION_WORKER_TOKEN:?Set ASTERION_WORKER_TOKEN in .env}
+      ASTERION_API_KEYS_JSON: ${ASTERION_API_KEYS_JSON:?Set ASTERION_API_KEYS_JSON in .env}
+    ports:
+      - "4020:4020"
+    volumes:
+      - asterion-state:/var/lib/asterion
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4020/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+  web:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.web
+    ports:
+      - "5174:80"
+    depends_on:
+      api:
+        condition: service_healthy
+  worker:
+    profiles: ["scheduler"]
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.worker
+    environment:
+      ASTERION_API_URL: http://api:4020
+      ASTERION_WORKER_TOKEN: ${ASTERION_WORKER_TOKEN:?Set ASTERION_WORKER_TOKEN in .env}
+      ASTERION_ORGANIZATION_ID: ${ASTERION_ORGANIZATION_ID:?Create an organization first}
+      ASTERION_WORKER_INTERVAL_MS: "30000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  asterion-state:
