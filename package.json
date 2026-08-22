@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "description": "A field operations and maintenance platform for preventing asset downtime.",
+  "author": "Liona-Orph",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Liona-orph/asterion-operations.git"
+  },
   "type": "module",
   "packageManager": "npm@10.9.8",
   "engines": {
